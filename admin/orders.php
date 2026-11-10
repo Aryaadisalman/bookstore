@@ -23,6 +23,14 @@ if (isset($_GET['status']) && isset($_GET['id'])) {
     }
 }
 
+// --- Hapus pesanan jika ada ---
+if (isset($_GET['delete']) && isset($_GET['id'])) {
+    $deleteId = (int)$_GET['id'];
+    $pdo->prepare("DELETE FROM order_details WHERE order_id = ?")->execute([$deleteId]);
+    $pdo->prepare("DELETE FROM orders WHERE id = ?")->execute([$deleteId]);
+    redirect('orders.php');
+}
+
 // --- Ambil semua pesanan ---
 $stmt = $pdo->query("SELECT o.*, u.name AS user_name
                      FROM orders o
@@ -55,9 +63,15 @@ require_once 'includes/header.php';
     <div class="card shadow-sm mb-4">
         <div class="card-header d-flex justify-content-between">
             <h5 class="mb-0">Pesanan #<?= $orderHeader['id'] ?></h5>
-            <a href="orders.php" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Kembali
-            </a>
+            <div class="d-flex gap-2">
+                <a href="orders.php?delete=1&id=<?= $orderHeader['id'] ?>" class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Yakin ingin menghapus pesanan #<?= $orderHeader['id'] ?> ini? Tindakan ini tidak bisa dibatalkan.');">
+                    <i class="bi bi-trash"></i> Hapus
+                </a>
+                <a href="orders.php" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Kembali
+                </a>
+            </div>
         </div>
         <div class="card-body">
             <div class="row mb-3">
@@ -175,10 +189,17 @@ require_once 'includes/header.php';
                             </td>
                             <td><?= date('d M Y', strtotime($o['created_at'])) ?></td>
                             <td class="text-center">
-                                <a href="orders.php?view=detail&id=<?= $o['id'] ?>"
-                                   class="btn btn-sm btn-outline-primary" title="Lihat Detail">
-                                    <i class="bi bi-eye"></i>
-                                </a>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="orders.php?view=detail&id=<?= $o['id'] ?>"
+                                       class="btn btn-sm btn-outline-primary" title="Lihat Detail">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="orders.php?delete=1&id=<?= $o['id'] ?>"
+                                       class="btn btn-sm btn-outline-danger" title="Hapus Pesanan"
+                                       onclick="return confirm('Yakin ingin menghapus pesanan #<?= $o['id'] ?> dari <?= htmlspecialchars(addslashes($o['name'])) ?>? Tindakan ini tidak bisa dibatalkan.');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
